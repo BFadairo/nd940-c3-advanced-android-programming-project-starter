@@ -18,22 +18,20 @@ class LoadingButton @JvmOverloads constructor(
     private var widthSize = 0
     private var heightSize = 0
 
-    private val STROKE_WIDTH = 1000f // has to be float
     private val drawColor = ResourcesCompat.getColor(resources, R.color.colorPrimary, null)
 
     private var valueAnimator = ValueAnimator()
+    private var circleValueAnimator = ValueAnimator()
 
     private val defaultRect = RectF()
     private val loadingRect = RectF()
     private var progress = 0f
+    private var currentSweepAngle = 0
 
     var text: String = "Download"
 
     private var buttonState: ButtonState by Delegates.observable<ButtonState>(ButtonState.Completed) { p, old, new ->
         when (new) {
-            ButtonState.Clicked -> {
-                animateLoadingBar()
-            }
             ButtonState.Loading -> {
                 startLoad()
             }
@@ -73,26 +71,14 @@ class LoadingButton @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         if (canvas != null) {
-//            when (buttonState) {
-//                ButtonState.Clicked -> {
-//                    drawContainer(canvas)
-//                    canvas.drawColor(colorForBackground)
-//                    drawButtonText(canvas)
-//                    animateLoadingBar(canvas)
-//                }
-//                else -> {
-//                    drawContainer(canvas)
-//                    canvas.drawColor(Color.RED)
-//                    drawButtonText(canvas)
-//                    drawLoadingCircle(canvas)
-//                }
-//            }
-//            canvas.drawColor(colorForBackground)
             drawContainer(canvas)
             if (progress < 1f) {
                 drawLoadingRectangle(canvas)
             }
             drawButtonText(canvas)
+            if (currentSweepAngle < 360) {
+                drawLoadingCircle(canvas)
+            }
         }
     }
 
@@ -106,7 +92,6 @@ class LoadingButton @JvmOverloads constructor(
         defaultRect.bottom = canvas.height - 0f
 
         canvas.drawRect(defaultRect, paint)
-//        canvas.drawRect(50f, 0f, canvas.width + 50f, canvas.height - 0f, paint)
         canvas.restore()
     }
 
@@ -120,16 +105,13 @@ class LoadingButton @JvmOverloads constructor(
         loadingRect.bottom = canvas.height - 0f
 
         canvas.drawRect(loadingRect, paint)
-//        canvas.drawRect(50f, 0f, canvas.width + 50f, canvas.height - 0f, paint)
         canvas.restore()
     }
 
     private fun drawButtonText(canvas: Canvas) {
         canvas.save()
         val xPos = (canvas.width / 2.0f)
-//        val xPos = defaultRect.left + defaultRect.width() / 2
         val yPos = (canvas.height / 2.0f)
-//        val yPos = defaultRect.top + defaultRect.height() / 2
         paint.style = Paint.Style.FILL
         paint.textAlign = Paint.Align.CENTER
         paint.color = textColor
@@ -146,6 +128,9 @@ class LoadingButton @JvmOverloads constructor(
             addUpdateListener {
                 progress = animatedFraction
                 Log.v("LoadingButton", "Progress Value: $progress")
+                if (progress == 1.0f) {
+                    buttonState = ButtonState.Completed
+                }
                 invalidate()
             }
         }
@@ -154,11 +139,24 @@ class LoadingButton @JvmOverloads constructor(
 
     private fun drawLoadingCircle(canvas: Canvas) {
         canvas.save()
-        val radius = 50f
-        val circleX = width - radius - 50f
-        val circleY = defaultRect.top + defaultRect.height() / 2
-        canvas.drawCircle(circleX, circleY, radius, paint)
+        val frame = RectF(defaultRect.top + (canvas.width / 2f), defaultRect.top, defaultRect.right, defaultRect.bottom)
+        defaultRect.left + 200f
+        paint.color = Color.YELLOW
+        canvas.drawArc(frame, 225f, currentSweepAngle - 0f, true, paint)
         canvas.restore()
+    }
+
+    private fun animateLoadingCircle() {
+        circleValueAnimator.cancel()
+        circleValueAnimator = ValueAnimator.ofInt(0, 360).apply {
+            duration = 500
+            interpolator = LinearInterpolator()
+            addUpdateListener {
+                currentSweepAngle = animatedValue as Int
+                invalidate()
+            }
+        }
+        circleValueAnimator.start()
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -183,12 +181,14 @@ class LoadingButton @JvmOverloads constructor(
     }
 
     private fun touchUp() {
-        buttonState = ButtonState.Clicked
+        buttonState = ButtonState.Loading
         invalidate()
     }
 
     private fun startLoad() {
-        text = "Loading"
+        text = "We are loading"
+        animateLoadingBar()
+        animateLoadingCircle()
         invalidate()
     }
 
