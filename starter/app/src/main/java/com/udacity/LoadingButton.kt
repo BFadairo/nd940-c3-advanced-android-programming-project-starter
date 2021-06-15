@@ -7,9 +7,14 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.DecelerateInterpolator
 import android.view.animation.LinearInterpolator
+import android.widget.Button
 import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.toRectF
+import androidx.core.graphics.withTranslation
 import kotlin.properties.Delegates
 
 class LoadingButton @JvmOverloads constructor(
@@ -27,6 +32,8 @@ class LoadingButton @JvmOverloads constructor(
     private val loadingRect = RectF()
     private var progress = 0f
     private var currentSweepAngle = 0
+
+    private var bounds = Rect()
 
     var text: String = "Download"
 
@@ -60,7 +67,7 @@ class LoadingButton @JvmOverloads constructor(
             0,0).apply {
                 try {
                     colorForBackground = getColor(R.styleable.LoadingButton_backgroundColor, Color.GREEN)
-                    textColor = getColor(R.styleable.LoadingButton_textColor, Color.GREEN)
+                    textColor = getColor(R.styleable.LoadingButton_textColor, Color.BLACK)
                     loadingBarColor = context.resources.getColor(R.color.colorPrimaryDark)
                 } finally {
                     recycle()
@@ -71,14 +78,10 @@ class LoadingButton @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         if (canvas != null) {
-            drawContainer(canvas)
-            if (progress < 1f) {
-                drawLoadingRectangle(canvas)
-            }
+            canvas.drawColor(colorForBackground)
+            drawLoadingRectangle(canvas)
             drawButtonText(canvas)
-            if (currentSweepAngle < 360) {
-                drawLoadingCircle(canvas)
-            }
+            drawLoadingCircle(canvas)
         }
     }
 
@@ -86,12 +89,14 @@ class LoadingButton @JvmOverloads constructor(
         canvas.save()
         paint.style = Paint.Style.FILL_AND_STROKE
         paint.color = colorForBackground
-        defaultRect.left = 0f
-        defaultRect.top = 0f
-        defaultRect.right = canvas.width - 0f
-        defaultRect.bottom = canvas.height - 0f
-
+        defaultRect.left = left + (right - left) / 3f
+        defaultRect.top = top + (bottom - top) / 3f
+        defaultRect.right = right - (right - left) / 3f
+        defaultRect.bottom = bottom - (bottom - top) / 3f
         canvas.drawRect(defaultRect, paint)
+        canvas.withTranslation(x / 2, y / 2) {
+            canvas.drawRect(defaultRect, paint)
+        }
         canvas.restore()
     }
 
@@ -103,7 +108,6 @@ class LoadingButton @JvmOverloads constructor(
         loadingRect.top = 0f
         loadingRect.right = progress * 1000
         loadingRect.bottom = canvas.height - 0f
-
         canvas.drawRect(loadingRect, paint)
         canvas.restore()
     }
@@ -111,51 +115,52 @@ class LoadingButton @JvmOverloads constructor(
     private fun drawButtonText(canvas: Canvas) {
         canvas.save()
         val xPos = (canvas.width / 2.0f)
-        val yPos = (canvas.height / 2.0f)
         paint.style = Paint.Style.FILL
         paint.textAlign = Paint.Align.CENTER
         paint.color = textColor
+        paint.getTextBounds(text, 0,text.length, this.bounds)
+        val yPos = (canvas.height / 2.0f) + this.bounds.height() /2f
         canvas.drawText(text, xPos, yPos, paint)
+        canvas.restore()
+    }
+
+    private fun drawLoadingCircle(canvas: Canvas) {
+        canvas.save()
+        canvas.translate(canvas.width /2f + (bounds.right /2f), (canvas.height/2f) + (bounds.top/2f))
+//        canvas.translate(bounds.exactCenterX() /2f, bounds.exactCenterY())
+//        val frame = RectF(bounds.right.toFloat(), bounds.top.toFloat(), canvas.width.toFloat(), 0f)
+        paint.color = Color.YELLOW
+        canvas.drawArc(RectF(0f,0f, 50f, 50f), 90f, currentSweepAngle - 0f, true, paint)
         canvas.restore()
     }
 
     private fun animateLoadingBar() {
         valueAnimator.cancel()
-        Log.v("LoadingButton", "Start Loading animation")
         valueAnimator = ValueAnimator.ofInt(0, width).apply {
-            duration = 500
-            interpolator = LinearInterpolator()
+            duration = 2000
+            interpolator = AccelerateDecelerateInterpolator()
             addUpdateListener {
                 progress = animatedFraction
-                Log.v("LoadingButton", "Progress Value: $progress")
-                if (progress == 1.0f) {
-                    buttonState = ButtonState.Completed
-                }
                 invalidate()
             }
         }
+        valueAnimator.repeatCount = ValueAnimator.INFINITE
+        valueAnimator.repeatMode = ValueAnimator.REVERSE
         valueAnimator.start()
-    }
-
-    private fun drawLoadingCircle(canvas: Canvas) {
-        canvas.save()
-        val frame = RectF(defaultRect.top + (canvas.width / 2f), defaultRect.top, defaultRect.right, defaultRect.bottom)
-        defaultRect.left + 200f
-        paint.color = Color.YELLOW
-        canvas.drawArc(frame, 225f, currentSweepAngle - 0f, true, paint)
-        canvas.restore()
     }
 
     private fun animateLoadingCircle() {
         circleValueAnimator.cancel()
         circleValueAnimator = ValueAnimator.ofInt(0, 360).apply {
-            duration = 500
+            duration = 2000
             interpolator = LinearInterpolator()
             addUpdateListener {
                 currentSweepAngle = animatedValue as Int
                 invalidate()
             }
         }
+        circleValueAnimator.repeatCount = ValueAnimator.INFINITE
+        circleValueAnimator.repeatMode = ValueAnimator.REVERSE
         circleValueAnimator.start()
     }
 
@@ -173,7 +178,7 @@ class LoadingButton @JvmOverloads constructor(
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-
+        super.onTouchEvent(event)
         when (event?.action) {
             MotionEvent.ACTION_UP -> touchUp()
         }
@@ -185,15 +190,17 @@ class LoadingButton @JvmOverloads constructor(
         invalidate()
     }
 
-    private fun startLoad() {
+    fun startLoad() {
         text = "We are loading"
         animateLoadingBar()
         animateLoadingCircle()
         invalidate()
     }
 
-    private fun endLoad() {
+    fun endLoad() {
         text = "Download"
+        circleValueAnimator.end()
+        valueAnimator.end()
         invalidate()
     }
 }

@@ -20,4 +20,6 @@
     <string name="button_loading">We are loading </string>
     <string name="title_activity_detail">DetailActivity</string>
     <string name="download_image">Download Image</string>
+    <string name="status_label">Download Status:</string>
+    <string name="file_name_label">File Name:</string>
 </resources>

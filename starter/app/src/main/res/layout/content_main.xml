@@ -42,6 +42,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/glide_radio_button_text"
+            android:onClick="onRadioButtonClicked"
             android:textSize="@dimen/default_text_size" />
 
         <RadioButton
@@ -50,6 +51,7 @@
             android:layout_height="wrap_content"
             android:paddingTop="8dp"
             android:text="@string/loadApp_radio_button_text"
+            android:onClick="onRadioButtonClicked"
             android:textSize="@dimen/default_text_size" />
 
         <RadioButton
@@ -58,6 +60,7 @@
             android:layout_height="wrap_content"
             android:paddingTop="8dp"
             android:text="@string/retrofit_radio_button_text"
+            android:onClick="onRadioButtonClicked"
             android:textSize="@dimen/default_text_size" />
     </RadioGroup>
 
@@ -67,7 +70,7 @@
         android:layout_height="60dp"
         android:layout_margin="20dp"
         app:backgroundColor="@color/colorPrimary"
-        app:textColor="@android:color/black"
+        app:textColor="@android:color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
