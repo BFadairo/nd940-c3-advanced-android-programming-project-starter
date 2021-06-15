@@ -85,21 +85,6 @@ class LoadingButton @JvmOverloads constructor(
         }
     }
 
-    private fun drawContainer(canvas: Canvas) {
-        canvas.save()
-        paint.style = Paint.Style.FILL_AND_STROKE
-        paint.color = colorForBackground
-        defaultRect.left = left + (right - left) / 3f
-        defaultRect.top = top + (bottom - top) / 3f
-        defaultRect.right = right - (right - left) / 3f
-        defaultRect.bottom = bottom - (bottom - top) / 3f
-        canvas.drawRect(defaultRect, paint)
-        canvas.withTranslation(x / 2, y / 2) {
-            canvas.drawRect(defaultRect, paint)
-        }
-        canvas.restore()
-    }
-
     private fun drawLoadingRectangle(canvas: Canvas) {
         canvas.save()
         paint.style = Paint.Style.FILL_AND_STROKE
@@ -127,8 +112,6 @@ class LoadingButton @JvmOverloads constructor(
     private fun drawLoadingCircle(canvas: Canvas) {
         canvas.save()
         canvas.translate(canvas.width /2f + (bounds.right /2f), (canvas.height/2f) + (bounds.top/2f))
-//        canvas.translate(bounds.exactCenterX() /2f, bounds.exactCenterY())
-//        val frame = RectF(bounds.right.toFloat(), bounds.top.toFloat(), canvas.width.toFloat(), 0f)
         paint.color = Color.YELLOW
         canvas.drawArc(RectF(0f,0f, 50f, 50f), 90f, currentSweepAngle - 0f, true, paint)
         canvas.restore()

@@ -29,7 +29,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var loadingButton: LoadingButton
     private lateinit var radioGroup: RadioGroup
     private var fileName: String? = null
-    private val NOTIFICATION_INTENT_FILTER = "ACTION_NOTIFICATION_CLICKED"
 
 
     override fun onResume() {
@@ -49,7 +48,6 @@ class MainActivity : AppCompatActivity() {
             Log.v("MainActivity", "Loading Button Clicked")
             if (!fileName.isNullOrEmpty()) {
                 download()
-//                sendNotification(this, "Retrofit, A Type-safe library for making API calls on Android", "FAILURE")
             } else {
                 Toast.makeText(this, "An Item must be checked", Toast.LENGTH_SHORT).show()
             }
