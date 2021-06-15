@@ -29,12 +29,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var loadingButton: LoadingButton
     private lateinit var radioGroup: RadioGroup
     private var fileName: String? = null
+    private var downloadUrl: String? = null
 
 
     override fun onResume() {
         super.onResume()
         registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -46,7 +48,7 @@ class MainActivity : AppCompatActivity() {
 
         loadingButton.setOnClickListener {
             Log.v("MainActivity", "Loading Button Clicked")
-            if (!fileName.isNullOrEmpty()) {
+            if (!fileName.isNullOrEmpty() && !downloadUrl.isNullOrEmpty()) {
                 download()
             } else {
                 Toast.makeText(this, "An Item must be checked", Toast.LENGTH_SHORT).show()
@@ -64,14 +66,17 @@ class MainActivity : AppCompatActivity() {
                 R.id.radio_button_glide ->
                     if (checked) {
                         fileName = view.text.toString()
+                        downloadUrl = "https://github.com/bumptech/glide/archive/master.zip"
                     }
                 R.id.radio_button_load_app ->
                     if (checked) {
                         fileName = view.text.toString()
+                        downloadUrl = "https://github.com/udacity/nd940-c3-advanced-android-programming-project-starter/archive/master.zip"
                     }
                 R.id.radio_button_retrofit ->
                     if (checked) {
                         fileName = view.text.toString()
+                        downloadUrl = "https://github.com/square/retrofit/archive/master.zip"
                     }
             }
         }
@@ -100,14 +105,14 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-            loadingButton.endLoad()
+            loadingButton.updateButtonState(ButtonState.Completed)
             sendNotification(context, fileName, fileStatus)
         }
     }
 
     private fun download() {
         val request =
-            DownloadManager.Request(Uri.parse(URL))
+            DownloadManager.Request(Uri.parse(downloadUrl))
                 .setTitle(getString(R.string.app_name))
                 .setDescription(getString(R.string.app_description))
                 .setRequiresCharging(false)
@@ -147,7 +152,7 @@ class MainActivity : AppCompatActivity() {
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_assistant_black_24dp)
             .setContentTitle(getString(R.string.notification_title))
-            .setContentText(getString(R.string.notification_description))
+            .setContentText(getString(R.string.notification_content_text))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .setContentIntent(detailPendingIntent)

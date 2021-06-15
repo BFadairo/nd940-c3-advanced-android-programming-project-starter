@@ -28,14 +28,11 @@ class LoadingButton @JvmOverloads constructor(
     private var valueAnimator = ValueAnimator()
     private var circleValueAnimator = ValueAnimator()
 
-    private val defaultRect = RectF()
     private val loadingRect = RectF()
     private var progress = 0f
     private var currentSweepAngle = 0
 
     private var bounds = Rect()
-
-    var text: String = "Download"
 
     private var buttonState: ButtonState by Delegates.observable<ButtonState>(ButtonState.Completed) { p, old, new ->
         when (new) {
@@ -51,6 +48,8 @@ class LoadingButton @JvmOverloads constructor(
     private var colorForBackground: Int
     private var textColor: Int
     private var loadingBarColor: Int
+
+    var text: String = "Download"
 
     private val paint = Paint().apply {
         // Smooth out edges of what is drawn without affecting shape.
@@ -136,14 +135,13 @@ class LoadingButton @JvmOverloads constructor(
         circleValueAnimator.cancel()
         circleValueAnimator = ValueAnimator.ofInt(0, 360).apply {
             duration = 2000
-            interpolator = LinearInterpolator()
+            interpolator = AccelerateDecelerateInterpolator()
             addUpdateListener {
                 currentSweepAngle = animatedValue as Int
                 invalidate()
             }
         }
         circleValueAnimator.repeatCount = ValueAnimator.INFINITE
-        circleValueAnimator.repeatMode = ValueAnimator.REVERSE
         circleValueAnimator.start()
     }
 
@@ -173,17 +171,23 @@ class LoadingButton @JvmOverloads constructor(
         invalidate()
     }
 
-    fun startLoad() {
+    private fun startLoad() {
         text = "We are loading"
         animateLoadingBar()
         animateLoadingCircle()
         invalidate()
     }
 
-    fun endLoad() {
+    private fun endLoad() {
         text = "Download"
-        circleValueAnimator.end()
-        valueAnimator.end()
+        circleValueAnimator.cancel()
+        valueAnimator.cancel()
+        progress = 0f
+        currentSweepAngle = 0
         invalidate()
+    }
+
+    fun updateButtonState(state: ButtonState) {
+        this.buttonState = state
     }
 }
